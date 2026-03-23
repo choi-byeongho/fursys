@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment } from '@react-three/drei'
+import { OrbitControls, Grid } from '@react-three/drei'
 import { FurnitureMesh } from './FurnitureMesh'
 import { SupportPolygonMesh } from './SupportPolygonMesh'
 import { COMMarker } from './COMMarker'
@@ -9,36 +9,33 @@ import { TippingAnimation } from './TippingAnimation'
 
 export function Viewer3D() {
   return (
-    <div className="w-full h-full bg-gray-900 rounded-lg overflow-hidden">
+    <div style={{ width: '100%', height: '100%', background: '#111827', borderRadius: '8px', overflow: 'hidden' }}>
       <Canvas
         camera={{ position: [1.5, 2.0, 2.5], fov: 45 }}
-        shadows
+        gl={{ antialias: true }}
+        style={{ width: '100%', height: '100%' }}
       >
-        <color attach="background" args={['#1a1a2e']} />
+        <color attach="background" args={['#111827']} />
 
-        {/* 조명 */}
-        <ambientLight intensity={0.6} />
-        <directionalLight
-          position={[3, 5, 3]}
-          intensity={1.2}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-        />
-        <directionalLight position={[-2, 3, -2]} intensity={0.4} />
+        {/* 조명 — CDN 없이 수동 설정 */}
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[3, 5, 3]} intensity={1.5} />
+        <directionalLight position={[-2, 3, -2]} intensity={0.5} />
+        <pointLight position={[0, 3, 1]} intensity={0.3} />
 
-        {/* 환경 */}
-        <Environment preset="city" />
+        {/* 바닥 격자 */}
         <Grid
-          position={[0, 0, 0]}
-          args={[4, 4]}
+          position={[0.3, 0, 0.25]}
+          args={[6, 6]}
           cellSize={0.1}
           cellThickness={0.5}
-          cellColor="#444466"
+          cellColor="#334155"
           sectionSize={0.5}
           sectionThickness={1}
-          sectionColor="#6666aa"
-          fadeDistance={6}
+          sectionColor="#475569"
+          fadeDistance={8}
           fadeStrength={1}
+          infiniteGrid
         />
 
         {/* 가구 */}
