@@ -1,11 +1,32 @@
-import { Canvas } from '@react-three/fiber'
+import { useEffect, useRef } from 'react'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
+import { useGeometryStore } from '@/store/geometryStore'
 import { FurnitureMesh } from './FurnitureMesh'
 import { SupportPolygonMesh } from './SupportPolygonMesh'
 import { COMMarker } from './COMMarker'
 import { TippingEdgeLine } from './TippingEdgeLine'
 import { ForceVector } from './ForceVector'
 import { TippingAnimation } from './TippingAnimation'
+
+function CameraAdjuster() {
+  const furniture = useGeometryStore((s) => s.furniture)
+  const { camera } = useThree()
+  const adjusted = useRef(false)
+
+  useEffect(() => {
+    const bbox = furniture.geometry.bbox
+    const maxDim = Math.max(bbox.width, bbox.height, bbox.depth)
+    const distance = maxDim * 1.5
+
+    camera.position.set(distance * 0.6, distance * 0.8, distance * 0.6)
+    camera.lookAt(bbox.width / 2, bbox.height / 2, bbox.depth / 2)
+
+    adjusted.current = true
+  }, [furniture, camera])
+
+  return null
+}
 
 export function Viewer3D() {
   return (
@@ -15,6 +36,7 @@ export function Viewer3D() {
         gl={{ antialias: true }}
         style={{ width: '100%', height: '100%' }}
       >
+        <CameraAdjuster />
         <color attach="background" args={['#111827']} />
 
         {/* 조명 — CDN 없이 수동 설정 */}
