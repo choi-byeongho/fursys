@@ -51,6 +51,7 @@ export function computeCriticalExtension(
 
   lo = lo_bound
 
+  let converged = false
   for (let iter = 0; iter < 60; iter++) {
     const mid = (lo + hi) / 2
     if (testKin(mid) > 0) {
@@ -58,8 +59,12 @@ export function computeCriticalExtension(
     } else {
       hi = mid
     }
-    if (hi - lo < 0.001) break
+    if (hi - lo < 0.001) {
+      converged = true
+      break
+    }
   }
 
+  if (!converged) return null
   return clamp(lo, lo_bound, hi_bound)
 }

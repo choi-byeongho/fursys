@@ -21,6 +21,8 @@ export interface Part {
   mass_factor: number
   density: number
   color?: string
+  volume?: number
+  centroid?: [number, number, number]
 }
 
 export interface KinematicConstraint {
@@ -28,6 +30,8 @@ export interface KinematicConstraint {
   axis: 'x' | 'y' | 'z'
   range: [number, number]
   current_position: number
+  /** rotation 모션 전용: bbox.x 기준 힌지 오프셋 (m). 기본값 0 */
+  hinge_offset?: number
 }
 
 export interface ExternalLoad {
@@ -112,4 +116,6 @@ export interface SolverResult {
   improvement_suggestions: string[]
   is_tipping: boolean
   total_mass: number
+  tipping_angle?: number
+  tipping_energy?: number
 }

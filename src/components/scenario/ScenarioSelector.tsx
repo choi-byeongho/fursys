@@ -23,9 +23,9 @@ function FormSlider({
 
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between text-xs text-gray-600">
         <span>{label}</span>
-        <span className="font-mono text-gray-200">
+        <span className="font-mono text-gray-800">
           {value.toFixed(step < 1 ? 2 : 0)} {unit}
         </span>
       </div>
@@ -76,11 +76,11 @@ function SingleMovableForm() {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <label className="text-xs text-gray-400">가동 파트 선택</label>
+        <label className="text-xs text-gray-600">가동 파트 선택</label>
         <select
           value={selectedId}
           onChange={(e) => setParam('part_id', e.target.value)}
-          className="w-full mt-1 bg-gray-800 text-gray-200 text-xs rounded px-2 py-1.5 border border-gray-700"
+          className="w-full mt-1 bg-white text-gray-800 text-xs rounded px-2 py-1.5 border border-gray-400"
         >
           {movableParts.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
@@ -89,11 +89,11 @@ function SingleMovableForm() {
       </div>
       {constraint && (
         <div className="flex flex-col gap-0.5">
-          <div className="flex justify-between text-xs text-gray-400">
+          <div className="flex justify-between text-xs text-gray-600">
             <span>
               {part?.motion_type === 'rotation' ? '회전 각도' : '이동 거리'}
             </span>
-            <span className="font-mono text-gray-200">
+            <span className="font-mono text-gray-800">
               {Number(params.displacement ?? 0).toFixed(part?.motion_type === 'rotation' ? 0 : 2)}{' '}
               {part?.motion_type === 'rotation' ? '°' : 'm'}
             </span>
@@ -164,9 +164,9 @@ function MultiMovableForm() {
         const currentDisp = items.find((i) => i.part_id === part.id)?.displacement ?? 0
         return (
           <div key={part.id} className="flex flex-col gap-0.5">
-            <div className="flex justify-between text-xs text-gray-400">
+            <div className="flex justify-between text-xs text-gray-600">
               <span>{part.name}</span>
-              <span className="font-mono text-gray-200">
+              <span className="font-mono text-gray-800">
                 {currentDisp.toFixed(part.motion_type === 'rotation' ? 0 : 2)}
                 {part.motion_type === 'rotation' ? '°' : 'm'}
               </span>
@@ -196,9 +196,9 @@ function EdgeLoadForm() {
     <div className="flex flex-col gap-3">
       {/* 적용 하중 */}
       <div className="flex flex-col gap-0.5">
-        <div className="flex justify-between text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-gray-600">
           <span>적용 질량</span>
-          <span className="font-mono text-gray-200">{Number(params.applied_mass ?? 40).toFixed(0)} kg</span>
+          <span className="font-mono text-gray-800">{Number(params.applied_mass ?? 40).toFixed(0)} kg</span>
         </div>
         <input
           type="range" min={10} max={100} step={1}
@@ -210,9 +210,9 @@ function EdgeLoadForm() {
 
       {/* 외각에서 거리 */}
       <div className="flex flex-col gap-0.5">
-        <div className="flex justify-between text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-gray-600">
           <span>외각에서 거리</span>
-          <span className="font-mono text-gray-200">{(Number(params.offset_from_edge ?? 0.1) * 100).toFixed(0)} cm</span>
+          <span className="font-mono text-gray-800">{(Number(params.offset_from_edge ?? 0.1) * 100).toFixed(0)} cm</span>
         </div>
         <input
           type="range" min={0} max={0.3} step={0.01}
@@ -224,7 +224,7 @@ function EdgeLoadForm() {
 
       {/* 방향 선택 */}
       <div>
-        <label className="text-xs text-gray-400">하중 적용 방향</label>
+        <label className="text-xs text-gray-600">하중 적용 방향</label>
         <div className="grid grid-cols-2 gap-1 mt-1">
           {(['front', 'back', 'left', 'right'] as const).map((s) => {
             const label = { front: '전면', back: '후면', left: '좌측', right: '우측' }[s]
@@ -235,7 +235,7 @@ function EdgeLoadForm() {
                 className={`py-1 text-xs rounded border transition-colors ${
                   side === s
                     ? 'bg-orange-600 border-orange-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+                    : 'bg-white border-gray-400 text-gray-600 hover:border-gray-400'
                 }`}
               >
                 {label}
@@ -245,7 +245,7 @@ function EdgeLoadForm() {
         </div>
       </div>
 
-      <div className="text-xs text-gray-500 bg-gray-800/50 rounded p-2">
+      <div className="text-xs text-gray-600 bg-white rounded p-2">
         선택한 면의 외각에서 지정 거리 안쪽 지점에 수직 하향 하중 적용.
         유효 무게중심이 바닥 투영 기준으로 지지영역을 벗어나면 전도 위험.
       </div>
@@ -258,13 +258,13 @@ export function ScenarioSelector() {
   const setScenario = useScenarioStore((s) => s.setScenario)
 
   return (
-    <div className="flex flex-col gap-3 p-3 border-b border-gray-700">
-      <h2 className="text-sm font-bold text-gray-300">시나리오 선택</h2>
+    <div className="flex flex-col gap-3 p-3 border-b border-gray-400">
+      <h2 className="text-sm font-bold text-gray-700">시나리오 선택</h2>
 
       <select
         value={activeType}
         onChange={(e) => setScenario(e.target.value as ScenarioType)}
-        className="w-full bg-gray-800 text-gray-200 text-xs rounded px-2 py-2 border border-gray-700 focus:outline-none focus:border-blue-500"
+        className="w-full bg-white text-gray-800 text-xs rounded px-2 py-2 border border-gray-400 focus:outline-none focus:border-blue-500"
       >
         {SCENARIO_DEFINITIONS.map((def) => (
           <option key={def.id} value={def.id}>
@@ -273,7 +273,7 @@ export function ScenarioSelector() {
         ))}
       </select>
 
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-gray-600">
         {SCENARIO_DEFINITIONS.find((d) => d.id === activeType)?.description}
       </div>
 

@@ -75,7 +75,6 @@ function parseBinarySTL(arrayBuffer: ArrayBuffer): STLGeometry | null {
  */
 function parseASCIISTL(text: string): STLGeometry | null {
   const vertices: number[][] = []
-  const vertexMap = new Map<string, number>()
   const faces: number[][] = []
 
   // "vertex x y z" 패턴 추출

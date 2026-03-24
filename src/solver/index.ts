@@ -253,7 +253,7 @@ export function runSolver(
   const tipping_edge = findTippingEdge(eff_projection, polygon)
   const tipping_direction = edgeToKoreanDirection(tipping_edge)
 
-  // 7. 임계 가압력 (실제 COM 기준)
+  // 7. 임계 가압력 (실제 COM 기준) 및 동적 전도(에너지) 계산
   const { distance: actual_margin } = computeDistanceToEdge(com_projection, polygon)
   const critical_push_force = computeCriticalPushForce(
     actual_margin,
@@ -261,6 +261,15 @@ export function runSolver(
     total_mass,
     gravity
   )
+
+  // 넘어가기 위해 무게중심이 들려야 하는 높이 및 각도 계산
+  let tipping_angle: number | undefined
+  let tipping_energy: number | undefined
+  if (actual_margin > 0 && com.y > 0) {
+    const r = Math.sqrt(actual_margin * actual_margin + com.y * com.y)
+    tipping_angle = Math.atan2(actual_margin, com.y) * (180 / Math.PI)
+    tipping_energy = total_mass * gravity * (r - com.y)
+  }
 
   // 8. 임계 작동 거리 (가동부 시나리오)
   let critical_extension_distance: number | null = null
@@ -319,5 +328,7 @@ export function runSolver(
     improvement_suggestions,
     is_tipping,
     total_mass,
+    tipping_angle,
+    tipping_energy,
   }
 }

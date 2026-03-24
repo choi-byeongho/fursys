@@ -2,7 +2,8 @@ import type { Part, KinematicConstraint, Vector3D } from '@/types'
 import { bboxVolume, bboxCentroid } from '@/utils/geometry'
 
 export function computePartMass(part: Part): number {
-  return bboxVolume(part.bbox) * part.density * part.mass_factor
+  const vol = part.volume ?? bboxVolume(part.bbox)
+  return vol * part.density * part.mass_factor
 }
 
 /**
@@ -14,7 +15,8 @@ export function computePartCentroid(
   part: Part,
   kinematics: KinematicConstraint[]
 ): Vector3D {
-  const base = bboxCentroid(part.bbox)
+  const cArray = part.centroid
+  const base = cArray ? { x: cArray[0], y: cArray[1], z: cArray[2] } : bboxCentroid(part.bbox)
   const constraint = kinematics.find((k) => k.part_id === part.id)
   if (!constraint || part.type !== 'movable') return base
 
@@ -28,9 +30,9 @@ export function computePartCentroid(
   }
 
   if (part.motion_type === 'rotation') {
-    // Y축 회전(문): 힌지 축은 bbox의 x 최솟값, 문은 Z축 방향으로 열림
+    // Y축 회전(문): 힌지 축은 bbox.x + hinge_offset, 문은 Z축 방향으로 열림
     const angleRad = (pos * Math.PI) / 180
-    const pivotX = part.bbox.x
+    const pivotX = part.bbox.x + (constraint.hinge_offset ?? 0)
     const pivotZ = part.bbox.z
     // base 상대 위치 (힌지 기준)
     const relX = base.x - pivotX

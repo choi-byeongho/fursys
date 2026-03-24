@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useGeometryStore } from '@/store/geometryStore'
@@ -8,7 +8,6 @@ import { COMMarker } from './COMMarker'
 import { TippingEdgeLine } from './TippingEdgeLine'
 import { ForceVector } from './ForceVector'
 import { TippingAnimation } from './TippingAnimation'
-import { Group } from 'three'
 
 function CameraAdjuster() {
   const furniture = useGeometryStore((s) => s.furniture)
@@ -60,38 +59,27 @@ function CameraController({
   return null
 }
 
-function RotatableGroup({
-  rotation,
-  children,
-}: {
-  rotation: { x: number; y: number; z: number }
-  children: React.ReactNode
-}) {
-  return (
-    <group rotation={[rotation.x, rotation.y, rotation.z]}>
-      {children}
-    </group>
-  )
-}
+
 
 export function Viewer3D() {
   const viewRef = useRef<(view: string) => void>(() => {})
-  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
+  const rotateGeometry = useGeometryStore((s) => s.rotateGeometry)
 
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
-        background: '#111827',
-        borderRadius: '8px',
+        background: '#f5f5f7',
+        borderRadius: '12px',
         overflow: 'hidden',
         position: 'relative',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
       }}
     >
       {/* 뷰 컨트롤 UI */}
-      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg border border-gray-700 max-w-xs">
-        <div className="text-xs font-semibold text-gray-300">카메라 뷰</div>
+      <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 bg-white/70 backdrop-blur-md p-4 rounded-xl border border-gray-200 max-w-xs shadow-lg">
+        <div className="text-xs font-semibold text-gray-800">카메라 뷰</div>
         <div className="grid grid-cols-2 gap-2">
           {[
             { id: 'front', label: '정면' },
@@ -104,7 +92,7 @@ export function Viewer3D() {
             <button
               key={id}
               onClick={() => viewRef.current(id)}
-              className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-600 hover:border-gray-500 transition-colors"
+              className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-lg border border-gray-200 transition-colors"
             >
               {label}
             </button>
@@ -112,91 +100,42 @@ export function Viewer3D() {
         </div>
         <button
           onClick={() => viewRef.current('iso')}
-          className="px-3 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-500 transition-colors w-full"
+          className="px-3 py-1.5 text-xs bg-black hover:bg-gray-800 text-white rounded-lg transition-colors w-full shadow-sm mt-1"
         >
           뷰 리셋
         </button>
 
-        {/* 모델 회전 컨트롤 */}
-        <div className="border-t border-gray-700 pt-3 mt-3">
-          <div className="text-xs font-semibold text-gray-300 mb-2">모델 회전</div>
+        {/* 모델 회전 컨트롤 (물리적) */}
+        <div className="border-t border-gray-200 pt-3 mt-3">
+          <div className="text-xs font-semibold text-gray-800 mb-2">물리적 회전 (시뮬레이션 적용)</div>
+          
+          {(['x', 'y', 'z'] as const).map((axis) => (
+            <div key={axis} className="flex justify-between items-center mb-1.5">
+              <span className="text-xs text-gray-600 w-12 font-medium">{axis.toUpperCase()}축</span>
+              <div className="flex gap-1.5 flex-1">
+                <button
+                  onClick={() => rotateGeometry(axis, -1)}
+                  className="flex-1 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded border border-gray-200"
+                >
+                  -90°
+                </button>
+                <button
+                  onClick={() => rotateGeometry(axis, 1)}
+                  className="flex-1 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded border border-gray-200"
+                >
+                  +90°
+                </button>
+              </div>
+            </div>
+          ))}
 
-          {/* X축 회전 */}
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-xs text-gray-400 w-12">X축</label>
-            <input
-              type="range"
-              min="-180"
-              max="180"
-              step="5"
-              value={rotation.x * (180 / Math.PI)}
-              onChange={(e) =>
-                setRotation((prev) => ({
-                  ...prev,
-                  x: parseFloat(e.target.value) * (Math.PI / 180),
-                }))
-              }
-              className="flex-1 h-1 accent-red-500"
-            />
-            <span className="text-xs text-gray-500 w-10 text-right">
-              {Math.round(rotation.x * (180 / Math.PI))}°
-            </span>
+          <div className="text-[10px] text-gray-500 mt-2 leading-tight">
+            가구가 눕혀져서 임포트된 경우 이 버튼으로 바로세우면 시뮬레이션에 즉시 반영됩니다.
           </div>
-
-          {/* Y축 회전 */}
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-xs text-gray-400 w-12">Y축</label>
-            <input
-              type="range"
-              min="-180"
-              max="180"
-              step="5"
-              value={rotation.y * (180 / Math.PI)}
-              onChange={(e) =>
-                setRotation((prev) => ({
-                  ...prev,
-                  y: parseFloat(e.target.value) * (Math.PI / 180),
-                }))
-              }
-              className="flex-1 h-1 accent-green-500"
-            />
-            <span className="text-xs text-gray-500 w-10 text-right">
-              {Math.round(rotation.y * (180 / Math.PI))}°
-            </span>
-          </div>
-
-          {/* Z축 회전 */}
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400 w-12">Z축</label>
-            <input
-              type="range"
-              min="-180"
-              max="180"
-              step="5"
-              value={rotation.z * (180 / Math.PI)}
-              onChange={(e) =>
-                setRotation((prev) => ({
-                  ...prev,
-                  z: parseFloat(e.target.value) * (Math.PI / 180),
-                }))
-              }
-              className="flex-1 h-1 accent-blue-500"
-            />
-            <span className="text-xs text-gray-500 w-10 text-right">
-              {Math.round(rotation.z * (180 / Math.PI))}°
-            </span>
-          </div>
-
-          <button
-            onClick={() => setRotation({ x: 0, y: 0, z: 0 })}
-            className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-600 hover:border-gray-500 transition-colors mt-2 w-full"
-          >
-            회전 리셋
-          </button>
         </div>
 
-        <div className="text-xs text-gray-500 mt-2 border-t border-gray-700 pt-2">
-          마우스 드래그: 카메라 회전
+        <div className="text-[10px] text-gray-400 mt-2 border-t border-gray-200 pt-2 text-center">
+          마우스 드래그로 카메라 회전
         </div>
       </div>
 
@@ -209,45 +148,42 @@ export function Viewer3D() {
         <CameraAdjuster />
         <CameraController viewRef={viewRef} />
 
-        <color attach="background" args={['#111827']} />
+        <color attach="background" args={['#ffffff']} />
+        
+        {/* Soft, studio-like lighting */}
+        <ambientLight intensity={1.2} />
+        <directionalLight position={[5, 10, 5]} intensity={1.5} color="#ffffff" castShadow />
+        <directionalLight position={[-5, 5, -5]} intensity={0.5} color="#f0f0ff" />
+        <spotLight position={[0, 10, 0]} intensity={0.8} angle={0.5} penumbra={1} />
 
-        {/* 조명 */}
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[3, 5, 3]} intensity={1.5} />
-        <directionalLight position={[-2, 3, -2]} intensity={0.5} />
-        <pointLight position={[0, 3, 1]} intensity={0.3} />
-
-        {/* 바닥 격자 */}
+        {/* Light theme floor grid */}
         <Grid
           position={[0.3, 0, 0.25]}
-          args={[6, 6]}
-          cellSize={0.1}
+          args={[10, 10]}
+          cellSize={0.2}
           cellThickness={0.5}
-          cellColor="#334155"
-          sectionSize={0.5}
+          cellColor="#e5e7eb"
+          sectionSize={1}
           sectionThickness={1}
-          sectionColor="#475569"
-          fadeDistance={8}
-          fadeStrength={1}
+          sectionColor="#d1d5db"
+          fadeDistance={15}
+          fadeStrength={1.5}
           infiniteGrid
         />
 
         {/* 지지영역 (고정) */}
         <SupportPolygonMesh />
 
-        {/* 무게중심, 힘 (고정 - 중력은 항상 아래) */}
+        {/* 무게중심, 힘 */}
         <COMMarker />
         <ForceVector />
 
-        {/* 회전 가능한 모델 그룹 */}
-        <RotatableGroup rotation={rotation}>
-          {/* 가구 메시 */}
-          <FurnitureMesh />
+        {/* 가구 메시 */}
+        <FurnitureMesh />
 
-          {/* 모델과 함께 회전하는 오버레이 */}
-          <TippingEdgeLine />
-          <TippingAnimation />
-        </RotatableGroup>
+        {/* 모델과 함께 회전하는 오버레이 */}
+        <TippingEdgeLine />
+        <TippingAnimation />
 
         {/* 카메라 컨트롤 */}
         <OrbitControls
