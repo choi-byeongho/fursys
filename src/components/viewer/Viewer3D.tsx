@@ -235,15 +235,17 @@ export function Viewer3D() {
         {/* 지지영역 (고정) */}
         <SupportPolygonMesh />
 
+        {/* 무게중심, 힘 (고정 - 중력은 항상 아래) */}
+        <COMMarker />
+        <ForceVector />
+
         {/* 회전 가능한 모델 그룹 */}
         <RotatableGroup rotation={rotation}>
           {/* 가구 메시 */}
           <FurnitureMesh />
 
-          {/* 오버레이 */}
-          <COMMarker />
+          {/* 모델과 함께 회전하는 오버레이 */}
           <TippingEdgeLine />
-          <ForceVector />
           <TippingAnimation />
         </RotatableGroup>
 
