@@ -232,13 +232,15 @@ export function Viewer3D() {
           infiniteGrid
         />
 
+        {/* 지지영역 (고정) */}
+        <SupportPolygonMesh />
+
         {/* 회전 가능한 모델 그룹 */}
         <RotatableGroup rotation={rotation}>
           {/* 가구 메시 */}
           <FurnitureMesh />
 
           {/* 오버레이 */}
-          <SupportPolygonMesh />
           <COMMarker />
           <TippingEdgeLine />
           <ForceVector />
