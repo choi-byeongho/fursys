@@ -142,6 +142,22 @@ export const useGeometryStore = create<GeometryState>()(
       minZ *= scale
       maxZ *= scale
 
+      // Y축 오프셋: 바닥이 y=0이 되도록 정렬
+      const yOffset = -minY
+      const adjustedVertices = scaledVertices.map(([x, y, z]) => [x, y + yOffset, z])
+      const newMaxY = maxY + yOffset
+      minY = 0
+      maxY = newMaxY
+
+      // X-Z 오프셋: 최소값이 0이 되도록 정렬 (선택)
+      const xOffset = -minX
+      const zOffset = -minZ
+      const finalVertices = adjustedVertices.map(([x, y, z]) => [x + xOffset, y, z + zOffset])
+      minX = 0
+      maxX = maxX + xOffset
+      minZ = 0
+      maxZ = maxZ + zOffset
+
       const width = maxX - minX || 1
       const height = maxY - minY || 1
       const depth = maxZ - minZ || 1
@@ -171,7 +187,7 @@ export const useGeometryStore = create<GeometryState>()(
         loads: [],
         scenarios: [],
         solver_settings: { gravity: 9.81, safety_margin: 0.05 },
-        mesh: { vertices: scaledVertices, faces: mesh.faces },
+        mesh: { vertices: finalVertices, faces: mesh.faces },
       }
       set((state) => {
         state.furniture = newGeometry
