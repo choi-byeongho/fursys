@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useGeometryStore } from '@/store/geometryStore'
@@ -8,6 +8,7 @@ import { COMMarker } from './COMMarker'
 import { TippingEdgeLine } from './TippingEdgeLine'
 import { ForceVector } from './ForceVector'
 import { TippingAnimation } from './TippingAnimation'
+import { Group } from 'three'
 
 function CameraAdjuster() {
   const furniture = useGeometryStore((s) => s.furniture)
@@ -59,8 +60,23 @@ function CameraController({
   return null
 }
 
+function RotatableGroup({
+  rotation,
+  children,
+}: {
+  rotation: { x: number; y: number; z: number }
+  children: React.ReactNode
+}) {
+  return (
+    <group rotation={[rotation.x, rotation.y, rotation.z]}>
+      {children}
+    </group>
+  )
+}
+
 export function Viewer3D() {
   const viewRef = useRef<(view: string) => void>(() => {})
+  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 })
 
   return (
     <div
@@ -74,8 +90,8 @@ export function Viewer3D() {
       }}
     >
       {/* 뷰 컨트롤 UI */}
-      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg border border-gray-700">
-        <div className="text-xs font-semibold text-gray-300 mb-2">뷰 선택</div>
+      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg border border-gray-700 max-w-xs">
+        <div className="text-xs font-semibold text-gray-300">카메라 뷰</div>
         <div className="grid grid-cols-2 gap-2">
           {[
             { id: 'front', label: '정면' },
@@ -96,12 +112,91 @@ export function Viewer3D() {
         </div>
         <button
           onClick={() => viewRef.current('iso')}
-          className="px-3 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-500 transition-colors mt-2 w-full"
+          className="px-3 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-500 transition-colors w-full"
         >
-          리셋
+          뷰 리셋
         </button>
+
+        {/* 모델 회전 컨트롤 */}
+        <div className="border-t border-gray-700 pt-3 mt-3">
+          <div className="text-xs font-semibold text-gray-300 mb-2">모델 회전</div>
+
+          {/* X축 회전 */}
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-xs text-gray-400 w-12">X축</label>
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="5"
+              value={rotation.x * (180 / Math.PI)}
+              onChange={(e) =>
+                setRotation((prev) => ({
+                  ...prev,
+                  x: parseFloat(e.target.value) * (Math.PI / 180),
+                }))
+              }
+              className="flex-1 h-1 accent-red-500"
+            />
+            <span className="text-xs text-gray-500 w-10 text-right">
+              {Math.round(rotation.x * (180 / Math.PI))}°
+            </span>
+          </div>
+
+          {/* Y축 회전 */}
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-xs text-gray-400 w-12">Y축</label>
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="5"
+              value={rotation.y * (180 / Math.PI)}
+              onChange={(e) =>
+                setRotation((prev) => ({
+                  ...prev,
+                  y: parseFloat(e.target.value) * (Math.PI / 180),
+                }))
+              }
+              className="flex-1 h-1 accent-green-500"
+            />
+            <span className="text-xs text-gray-500 w-10 text-right">
+              {Math.round(rotation.y * (180 / Math.PI))}°
+            </span>
+          </div>
+
+          {/* Z축 회전 */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-400 w-12">Z축</label>
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="5"
+              value={rotation.z * (180 / Math.PI)}
+              onChange={(e) =>
+                setRotation((prev) => ({
+                  ...prev,
+                  z: parseFloat(e.target.value) * (Math.PI / 180),
+                }))
+              }
+              className="flex-1 h-1 accent-blue-500"
+            />
+            <span className="text-xs text-gray-500 w-10 text-right">
+              {Math.round(rotation.z * (180 / Math.PI))}°
+            </span>
+          </div>
+
+          <button
+            onClick={() => setRotation({ x: 0, y: 0, z: 0 })}
+            className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-600 hover:border-gray-500 transition-colors mt-2 w-full"
+          >
+            회전 리셋
+          </button>
+        </div>
+
         <div className="text-xs text-gray-500 mt-2 border-t border-gray-700 pt-2">
-          마우스 드래그: 회전 / 스크롤: 줌
+          마우스 드래그: 카메라 회전
         </div>
       </div>
 
@@ -137,15 +232,18 @@ export function Viewer3D() {
           infiniteGrid
         />
 
-        {/* 가구 메시 */}
-        <FurnitureMesh />
+        {/* 회전 가능한 모델 그룹 */}
+        <RotatableGroup rotation={rotation}>
+          {/* 가구 메시 */}
+          <FurnitureMesh />
 
-        {/* 오버레이 */}
-        <SupportPolygonMesh />
-        <COMMarker />
-        <TippingEdgeLine />
-        <ForceVector />
-        <TippingAnimation />
+          {/* 오버레이 */}
+          <SupportPolygonMesh />
+          <COMMarker />
+          <TippingEdgeLine />
+          <ForceVector />
+          <TippingAnimation />
+        </RotatableGroup>
 
         {/* 카메라 컨트롤 */}
         <OrbitControls
