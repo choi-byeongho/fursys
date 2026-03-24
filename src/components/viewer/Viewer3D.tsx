@@ -12,7 +12,6 @@ import { TippingAnimation } from './TippingAnimation'
 function CameraAdjuster() {
   const furniture = useGeometryStore((s) => s.furniture)
   const { camera } = useThree()
-  const adjusted = useRef(false)
 
   useEffect(() => {
     const bbox = furniture.geometry.bbox
@@ -21,14 +20,16 @@ function CameraAdjuster() {
 
     camera.position.set(distance * 0.6, distance * 0.8, distance * 0.6)
     camera.lookAt(bbox.width / 2, bbox.height / 2, bbox.depth / 2)
-
-    adjusted.current = true
   }, [furniture, camera])
 
   return null
 }
 
-function ViewControlsInner({ onViewChange }: { onViewChange: (name: string) => void }) {
+function CameraController({
+  viewRef,
+}: {
+  viewRef: React.MutableRefObject<(view: string) => void>
+}) {
   const { camera } = useThree()
   const bbox = useGeometryStore((s) => s.furniture.geometry.bbox)
 
@@ -48,38 +49,45 @@ function ViewControlsInner({ onViewChange }: { onViewChange: (name: string) => v
       iso: [centerX + distance * 0.6, centerY + distance * 0.7, centerZ + distance * 0.6],
     }
 
-    const handleViewChange = (viewName: string) => {
+    viewRef.current = (viewName: string) => {
       const pos = positions[viewName] || positions.iso
       camera.position.set(...pos)
       camera.lookAt(centerX, centerY, centerZ)
     }
-
-    onViewChange(handleViewChange as any)
-  }, [bbox, camera, onViewChange])
+  }, [bbox, camera, viewRef])
 
   return null
 }
 
 export function Viewer3D() {
-  const cameraControlRef = useRef<(view: string) => void>()
+  const viewRef = useRef<(view: string) => void>(() => {})
 
   return (
-    <div style={{ width: '100%', height: '100%', background: '#111827', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
-      {/* 뷰 컨트롤 */}
-      <div className="absolute bottom-4 left-4 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg border border-gray-700 z-10">
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        background: '#111827',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      {/* 뷰 컨트롤 UI */}
+      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg border border-gray-700">
         <div className="text-xs font-semibold text-gray-300 mb-2">뷰 선택</div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { key: 'front', label: '정면' },
-            { key: 'back', label: '후면' },
-            { key: 'left', label: '좌측' },
-            { key: 'right', label: '우측' },
-            { key: 'top', label: '상단' },
-            { key: 'iso', label: '입체' },
-          ].map(({ key, label }) => (
+            { id: 'front', label: '정면' },
+            { id: 'back', label: '후면' },
+            { id: 'left', label: '좌측' },
+            { id: 'right', label: '우측' },
+            { id: 'top', label: '상단' },
+            { id: 'iso', label: '입체' },
+          ].map(({ id, label }) => (
             <button
-              key={key}
-              onClick={() => cameraControlRef.current?.(key)}
+              key={id}
+              onClick={() => viewRef.current(id)}
               className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-600 hover:border-gray-500 transition-colors"
             >
               {label}
@@ -87,30 +95,24 @@ export function Viewer3D() {
           ))}
         </div>
         <button
-          onClick={() => cameraControlRef.current?.('iso')}
-          className="px-3 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-500 transition-colors mt-2"
+          onClick={() => viewRef.current('iso')}
+          className="px-3 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-500 transition-colors mt-2 w-full"
         >
           리셋
         </button>
         <div className="text-xs text-gray-500 mt-2 border-t border-gray-700 pt-2">
-          마우스 드래그: 회전
-          <br />
-          스크롤: 줌
+          마우스 드래그: 회전 / 스크롤: 줌
         </div>
       </div>
 
+      {/* 3D Canvas */}
       <Canvas
         camera={{ position: [1.5, 2.0, 2.5], fov: 45 }}
         gl={{ antialias: true }}
         style={{ width: '100%', height: '100%' }}
       >
         <CameraAdjuster />
-
-        <ViewControlsInner
-          onViewChange={(fn) => {
-            cameraControlRef.current = fn
-          }}
-        />
+        <CameraController viewRef={viewRef} />
 
         <color attach="background" args={['#111827']} />
 
@@ -135,7 +137,7 @@ export function Viewer3D() {
           infiniteGrid
         />
 
-        {/* 가구 */}
+        {/* 가구 메시 */}
         <FurnitureMesh />
 
         {/* 오버레이 */}
