@@ -8,6 +8,7 @@ import { COMMarker } from './COMMarker'
 import { TippingEdgeLine } from './TippingEdgeLine'
 import { ForceVector } from './ForceVector'
 import { TippingAnimation } from './TippingAnimation'
+import { ViewControls } from './ViewControls'
 
 function CameraAdjuster() {
   const furniture = useGeometryStore((s) => s.furniture)
@@ -30,7 +31,8 @@ function CameraAdjuster() {
 
 export function Viewer3D() {
   return (
-    <div style={{ width: '100%', height: '100%', background: '#111827', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', background: '#111827', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+      <ViewControls />
       <Canvas
         camera={{ position: [1.5, 2.0, 2.5], fov: 45 }}
         gl={{ antialias: true }}
