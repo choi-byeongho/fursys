@@ -9,12 +9,14 @@ interface GeometryState {
   jsonString: string
   jsonError: string | null
   stepFileName: string | null
+  meshLoaded: boolean
   setFurniture: (f: FurnitureGeometry) => void
   setJsonString: (s: string) => void
   applyJsonString: () => void
   updatePart: (id: string, patch: Partial<Part>) => void
   updateKinematics: (part_id: string, position: number) => void
-  loadFromStep: (text: string, fileName: string) => string | null  // null = 성공, string = 오류 메시지
+  loadFromStep: (text: string, fileName: string) => string | null
+  loadFromSTL: (mesh: { vertices: number[][]; faces: number[][] }, fileName: string) => void
 }
 
 export const useGeometryStore = create<GeometryState>()(
@@ -23,6 +25,7 @@ export const useGeometryStore = create<GeometryState>()(
     jsonString: JSON.stringify(defaultGeometry, null, 2),
     jsonError: null,
     stepFileName: null,
+    meshLoaded: false,
 
     setFurniture: (f) =>
       set((state) => {
@@ -107,8 +110,66 @@ export const useGeometryStore = create<GeometryState>()(
         state.jsonString = JSON.stringify(newGeometry, null, 2)
         state.jsonError = null
         state.stepFileName = fileName
+        state.meshLoaded = false
       })
       return null
+    },
+
+    loadFromSTL: (mesh, fileName) => {
+      // 메시 바운드박스 계산
+      let minX = Infinity, maxX = -Infinity
+      let minY = Infinity, maxY = -Infinity
+      let minZ = Infinity, maxZ = -Infinity
+      for (const [x, y, z] of mesh.vertices) {
+        minX = Math.min(minX, x)
+        maxX = Math.max(maxX, x)
+        minY = Math.min(minY, y)
+        maxY = Math.max(maxY, y)
+        minZ = Math.min(minZ, z)
+        maxZ = Math.max(maxZ, z)
+      }
+      const width = maxX - minX || 1
+      const height = maxY - minY || 1
+      const depth = maxZ - minZ || 1
+
+      const newGeometry: FurnitureGeometry = {
+        geometry: { bbox: { width, depth, height } },
+        support_polygon: {
+          points: [
+            [minX, minZ],
+            [maxX, minZ],
+            [maxX, maxZ],
+            [minX, maxZ],
+          ],
+        },
+        parts: [
+          {
+            id: 'body',
+            name: fileName.replace(/\.stl$/i, ''),
+            type: 'fixed',
+            bbox: { x: minX, y: minY, z: minZ, width, height, depth },
+            mass_factor: 0.6,
+            density: 600,
+            color: '#a0856c',
+          },
+        ],
+        kinematics: [],
+        loads: [],
+        scenarios: [],
+        solver_settings: { gravity: 9.81, safety_margin: 0.05 },
+        mesh,
+      }
+      set((state) => {
+        state.furniture = newGeometry
+        state.jsonString = JSON.stringify(
+          { ...newGeometry, mesh: undefined },
+          null,
+          2
+        )
+        state.jsonError = null
+        state.stepFileName = fileName
+        state.meshLoaded = true
+      })
     },
   }))
 )

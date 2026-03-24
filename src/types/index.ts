@@ -39,6 +39,11 @@ export interface ExternalLoad {
 
 export type SupportPoint = [number, number] // [x, z]
 
+export interface STLMesh {
+  vertices: number[][] // [x, y, z][]
+  faces: number[][]    // [v0, v1, v2][]
+}
+
 export interface FurnitureGeometry {
   geometry: {
     bbox: { width: number; depth: number; height: number }
@@ -49,6 +54,7 @@ export interface FurnitureGeometry {
   loads: ExternalLoad[]
   scenarios: ScenarioDefinition[]
   solver_settings: SolverSettings
+  mesh?: STLMesh // 선택: STL 업로드 시 포함
 }
 
 export interface SolverSettings {
