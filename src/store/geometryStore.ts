@@ -116,7 +116,7 @@ export const useGeometryStore = create<GeometryState>()(
     },
 
     loadFromSTL: (mesh, fileName) => {
-      // 메시 바운드박스 계산
+      // 메시 바운드박스 계산 + 단위 자동 변환 (mm → m)
       let minX = Infinity, maxX = -Infinity
       let minY = Infinity, maxY = -Infinity
       let minZ = Infinity, maxZ = -Infinity
@@ -128,6 +128,20 @@ export const useGeometryStore = create<GeometryState>()(
         minZ = Math.min(minZ, z)
         maxZ = Math.max(maxZ, z)
       }
+
+      // 단위 감지: 최대 치수가 10 이상이면 mm로 판단 → 0.001 스케일
+      const maxDim = Math.max(maxX - minX, maxY - minY, maxZ - minZ)
+      const scale = maxDim > 10 ? 0.001 : 1
+
+      // 스케일 적용
+      const scaledVertices = mesh.vertices.map(([x, y, z]) => [x * scale, y * scale, z * scale])
+      minX *= scale
+      maxX *= scale
+      minY *= scale
+      maxY *= scale
+      minZ *= scale
+      maxZ *= scale
+
       const width = maxX - minX || 1
       const height = maxY - minY || 1
       const depth = maxZ - minZ || 1
@@ -157,7 +171,7 @@ export const useGeometryStore = create<GeometryState>()(
         loads: [],
         scenarios: [],
         solver_settings: { gravity: 9.81, safety_margin: 0.05 },
-        mesh,
+        mesh: { vertices: scaledVertices, faces: mesh.faces },
       }
       set((state) => {
         state.furniture = newGeometry
