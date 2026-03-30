@@ -19,7 +19,7 @@ export function ScrubbableKnob({
   step = 1,
   unit = '',
   onChange,
-  color = '#0071e3'
+  color: _color = '#0071e3'
 }: ScrubbableKnobProps) {
   const [isDragging, setIsDragging] = useState(false)
   const startY = useRef(0)
