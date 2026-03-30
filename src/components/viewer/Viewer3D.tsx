@@ -77,65 +77,51 @@ export function Viewer3D() {
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
       }}
     >
-      {/* 뷰 컨트롤 UI */}
-      <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 bg-white/70 backdrop-blur-md p-4 rounded-xl border border-gray-200 max-w-xs shadow-lg">
-        <div className="text-xs font-semibold text-gray-800">카메라 뷰</div>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { id: 'front', label: '정면' },
-            { id: 'back', label: '후면' },
-            { id: 'left', label: '좌측' },
-            { id: 'right', label: '우측' },
-            { id: 'top', label: '상단' },
-            { id: 'iso', label: '입체' },
-          ].map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => viewRef.current(id)}
-              className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-lg border border-gray-200 transition-colors"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => viewRef.current('iso')}
-          className="px-3 py-1.5 text-xs bg-black hover:bg-gray-800 text-white rounded-lg transition-colors w-full shadow-sm mt-1"
-        >
-          뷰 리셋
-        </button>
-
-        {/* 모델 회전 컨트롤 (물리적) */}
-        <div className="border-t border-gray-200 pt-3 mt-3">
-          <div className="text-xs font-semibold text-gray-800 mb-2">물리적 회전 (시뮬레이션 적용)</div>
-          
-          {(['x', 'y', 'z'] as const).map((axis) => (
-            <div key={axis} className="flex justify-between items-center mb-1.5">
-              <span className="text-xs text-gray-600 w-12 font-medium">{axis.toUpperCase()}축</span>
-              <div className="flex gap-1.5 flex-1">
-                <button
-                  onClick={() => rotateGeometry(axis, -1)}
-                  className="flex-1 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded border border-gray-200"
-                >
-                  -90°
-                </button>
-                <button
-                  onClick={() => rotateGeometry(axis, 1)}
-                  className="flex-1 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded border border-gray-200"
-                >
-                  +90°
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="text-[10px] text-gray-500 mt-2 leading-tight">
-            가구가 눕혀져서 임포트된 경우 이 버튼으로 바로세우면 시뮬레이션에 즉시 반영됩니다.
+      {/* 카메라 컨트롤 패널 — 우하단 */}
+      <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-2.5 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/80 shadow-lg p-3" style={{ minWidth: 168 }}>
+        {/* 뷰 프리셋 */}
+        <div>
+          <div className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1.5">Camera View</div>
+          <div className="grid grid-cols-3 gap-1">
+            {[
+              { id: 'front', label: 'Front' },
+              { id: 'back',  label: 'Back' },
+              { id: 'left',  label: 'Left' },
+              { id: 'right', label: 'Right' },
+              { id: 'top',   label: 'Top' },
+              { id: 'iso',   label: 'ISO' },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => viewRef.current(id)}
+                className="h-7 text-[10px] font-semibold bg-white/70 hover:bg-white text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 shadow-sm transition-all"
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="text-[10px] text-gray-400 mt-2 border-t border-gray-200 pt-2 text-center">
-          마우스 드래그로 카메라 회전
+        <div className="h-px bg-gray-200" />
+
+        {/* 물리 회전 */}
+        <div>
+          <div className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1.5">Rotate Model</div>
+          <div className="flex flex-col gap-1">
+            {(['x','y','z'] as const).map((axis) => (
+              <div key={axis} className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase text-gray-400 w-3">{axis}</span>
+                <button onClick={() => rotateGeometry(axis, -1)}
+                  className="flex-1 h-6 text-[10px] font-semibold bg-white/70 hover:bg-white text-gray-500 rounded-md border border-gray-200 shadow-sm transition-all">
+                  −90°
+                </button>
+                <button onClick={() => rotateGeometry(axis, 1)}
+                  className="flex-1 h-6 text-[10px] font-semibold bg-white/70 hover:bg-white text-gray-500 rounded-md border border-gray-200 shadow-sm transition-all">
+                  +90°
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

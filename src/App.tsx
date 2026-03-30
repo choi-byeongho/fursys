@@ -9,7 +9,7 @@ import { parseStepBBox } from '@/utils/stepParser'
 import { parseSTL } from '@/utils/stlParser'
 
 function AppShell() {
-  useSolver() // 스토어 변경 시 자동 계산
+  useSolver()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const loadFromStep = useGeometryStore((s) => s.loadFromStep)
   const loadFromSTL = useGeometryStore((s) => s.loadFromSTL)
@@ -17,6 +17,7 @@ function AppShell() {
   const redo = useGeometryStore((s) => s.redo)
   const canUndo = useGeometryStore((s) => s.canUndo)
   const canRedo = useGeometryStore((s) => s.canRedo)
+  const hasModel = useGeometryStore((s) => s.hasModel)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -31,27 +32,24 @@ function AppShell() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0]
     if (!file) return
-
     try {
-      if (file.name.endsWith('.stl') || file.name.endsWith('.STL')) {
-        // STL 파일
+      if (file.name.toLowerCase().endsWith('.stl')) {
         const mesh = await parseSTL(file)
         if (mesh) {
           loadFromSTL(mesh, file.name)
           const w = (mesh.bounds.maxX - mesh.bounds.minX).toFixed(2)
           const h = (mesh.bounds.maxY - mesh.bounds.minY).toFixed(2)
           const d = (mesh.bounds.maxZ - mesh.bounds.minZ).toFixed(2)
-          alert(`✓ STL 로드 성공\n${mesh.vertices.length}개 점, ${mesh.faces.length}개 면\n치수: ${w}m × ${h}m × ${d}m`)
+          alert(`✓ STL 로드 성공\n${mesh.vertices.length}개 점, ${mesh.faces.length}개 면\n${w}m × ${h}m × ${d}m`)
         } else {
           alert('✗ STL 파일을 파싱할 수 없습니다.')
         }
       } else {
-        // STEP 파일
         const text = await file.text()
         const bbox = parseStepBBox(text)
         if (bbox) {
           loadFromStep(bbox, file.name)
-          alert(`✓ STEP 로드 성공: ${bbox.pointCount}개 꼭짓점\n치수: ${bbox.width.toFixed(2)}m × ${bbox.height.toFixed(2)}m × ${bbox.depth.toFixed(2)}m`)
+          alert(`✓ STEP 로드 성공: ${bbox.pointCount}개 꼭짓점\n${bbox.width.toFixed(2)}m × ${bbox.height.toFixed(2)}m × ${bbox.depth.toFixed(2)}m`)
         } else {
           alert('✗ STEP 파일에서 꼭짓점을 찾을 수 없습니다.')
         }
@@ -63,68 +61,105 @@ function AppShell() {
   }
 
   return (
-    <div className="flex h-screen bg-[#f5f5f7] text-[#1d1d1f] overflow-hidden">
-      {/* 헤더 */}
-      <div className="absolute top-0 left-0 right-0 h-14 bg-white/70 backdrop-blur-md border-b border-gray-200 flex items-center px-6 gap-4 z-50">
-        <span className="text-[15px] font-semibold text-black tracking-tight tracking-wider">가구 전도 프리체크</span>
-        <span className="text-[13px] text-gray-400 font-medium">Furniture Tipping Simulator</span>
-        <div className="flex-1" />
-        <div className="flex gap-1">
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            title="실행 취소 (Ctrl+Z)"
-            className="py-1.5 px-3 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed text-gray-700 text-xs font-semibold rounded-full transition-colors"
-          >
-            ↩ 실행 취소
-          </button>
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            title="다시 실행 (Ctrl+Y)"
-            className="py-1.5 px-3 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed text-gray-700 text-xs font-semibold rounded-full transition-colors"
-          >
-            ↪ 다시 실행
-          </button>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".stp,.step,.stl,.STL"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="py-1.5 px-4 bg-black hover:bg-gray-800 text-white text-xs font-semibold rounded-full shadow-md transition-colors"
-        >
-          STP/STL 업로드
-        </button>
-      </div>
+    <div className="flex h-screen w-screen overflow-hidden text-slate-800" style={{ background: 'var(--bg-app)' }}>
+      {/* 백그라운드 효과 (레퍼런스의 은은한 그래디언트) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
 
-      {/* 메인 레이아웃 */}
-      <div className="flex w-full pt-14 h-full">
-        {/* 왼쪽: 편집기 */}
-        <div className="w-72 flex-shrink-0 overflow-hidden">
+      {/* 왼쪽 사이드바 - 고급스러운 카드 형태 */}
+      <div className="w-80 h-full p-4 flex flex-col gap-4 relative z-10">
+        <div className="flex items-center gap-3 px-3 py-4">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3" style={{ background: 'var(--accent)' }}>
+            <span className="text-white text-xs font-black tracking-tighter">SIM</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-black uppercase tracking-widest text-[#2d3436]">Lab-04</span>
+            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.2em]">Stability Test Unit</span>
+          </div>
+        </div>
+        
+        <div className="flex-1 glass-panel rounded-[32px] overflow-hidden border border-white/40 shadow-xl">
           <Sidebar />
         </div>
 
-        {/* 중앙: 3D 뷰어 */}
-        <div className="flex-1 min-w-0 p-3">
-          <ViewerErrorBoundary>
-            <Suspense fallback={
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm bg-white rounded-xl shadow-sm">
-                3D 뷰어 로딩 중...
+        {/* 하단 유틸리티 버튼 */}
+        <div className="flex gap-2 h-12">
+          <button 
+            onClick={undo}
+            disabled={!canUndo}
+            className="flex-1 glass-panel rounded-2xl flex items-center justify-center hover:bg-white/40 transition-all disabled:opacity-20"
+          >
+            <span className="text-lg">↺</span>
+          </button>
+          <button 
+            onClick={redo}
+            disabled={!canRedo}
+            className="flex-1 glass-panel rounded-2xl flex items-center justify-center hover:bg-white/40 transition-all disabled:opacity-20"
+          >
+            <span className="text-lg">↻</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 메인 뷰포트 - 플로팅 컨테이너 */}
+      <div className="flex-1 h-full py-4 pr-4 flex flex-col gap-4 relative z-10">
+        <div className="flex-1 relative flex flex-col">
+          {/* 상단 툴바 (헤더 대체) */}
+          <div className="absolute top-4 left-4 right-4 h-14 glass-panel rounded-2xl z-40 px-6 flex items-center justify-between border border-white/30">
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Environment: 01-Default</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input ref={fileInputRef} type="file" accept=".stp,.step,.stl,.STL" onChange={handleFileUpload} className="hidden" />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="h-9 px-5 text-[11px] font-black uppercase tracking-wider rounded-xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+                style={{ background: 'var(--accent)' }}
+              >
+                + Load Project
+              </button>
+            </div>
+          </div>
+
+          {/* 3D 뷰어 컨테이너 */}
+          <div className="flex-1 glass-panel rounded-[40px] overflow-hidden border border-white/50 shadow-2xl relative">
+            {hasModel ? (
+              <ViewerErrorBoundary>
+                <Suspense fallback={
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-gray-400">
+                    <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin border-gray-300" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Initialising Renderer...</span>
+                  </div>
+                }>
+                  <Viewer3D />
+                </Suspense>
+              </ViewerErrorBoundary>
+            ) : (
+              <div
+                className="w-full h-full flex flex-col items-center justify-center gap-8 cursor-pointer group"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-[32px] bg-white/50 shadow-xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-500">
+                    ↑
+                  </div>
+                  <div className="absolute -inset-4 bg-emerald-400/10 rounded-full blur-2xl group-hover:bg-emerald-400/20 transition-all" />
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-black text-[#2d3436] mb-1">Upload Laboratory Data</p>
+                  <p className="text-xs text-gray-400 font-medium tracking-wide">Supported formats: STEP / STL / STP</p>
+                </div>
               </div>
-            }>
-              <Viewer3D />
-            </Suspense>
-          </ViewerErrorBoundary>
+            )}
+          </div>
         </div>
 
-        {/* 오른쪽: 시나리오 + 결과 */}
-        <div className="w-72 flex-shrink-0 overflow-hidden">
-          <RightPanel />
+        {/* 하단 결과 패널 - 가로형 레이아웃 시도 */}
+        <div className="h-72 w-full flex gap-4">
+           <div className="flex-1 glass-panel rounded-[32px] overflow-hidden border border-white/40 shadow-xl">
+             <RightPanel />
+           </div>
         </div>
       </div>
     </div>

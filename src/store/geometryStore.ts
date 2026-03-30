@@ -11,6 +11,7 @@ const MAX_HISTORY = 20
 
 interface GeometryState {
   furniture: FurnitureGeometry
+  hasModel: boolean
   jsonString: string
   jsonError: string | null
   stepFileName: string | null
@@ -22,6 +23,7 @@ interface GeometryState {
   setFurniture: (f: FurnitureGeometry) => void
   setJsonString: (s: string) => void
   applyJsonString: () => void
+  clearModel: () => void
   updatePart: (id: string, patch: Partial<Part>) => void
   updateKinematics: (part_id: string, position: number) => void
   updateHingeOffset: (part_id: string, offset: number) => void
@@ -48,7 +50,8 @@ export const useGeometryStore = create<GeometryState>()(
 
     return {
       furniture: defaultGeometry,
-      jsonString: JSON.stringify(defaultGeometry, null, 2),
+      hasModel: false,
+      jsonString: '',
       jsonError: null,
       stepFileName: null,
       meshLoaded: false,
@@ -57,10 +60,25 @@ export const useGeometryStore = create<GeometryState>()(
       canUndo: false,
       canRedo: false,
 
+      clearModel: () =>
+        set((state) => {
+          state.hasModel = false
+          state.furniture = defaultGeometry
+          state.jsonString = ''
+          state.jsonError = null
+          state.stepFileName = null
+          state.meshLoaded = false
+          state._past = []
+          state._future = []
+          state.canUndo = false
+          state.canRedo = false
+        }),
+
       setFurniture: (f) => {
         pushHistory()
         set((state) => {
           state.furniture = f
+          state.hasModel = true
           state.jsonString = JSON.stringify(f, null, 2)
           state.jsonError = null
         })
@@ -85,6 +103,7 @@ export const useGeometryStore = create<GeometryState>()(
           pushHistory()
           set((state) => {
             state.furniture = parsed as FurnitureGeometry
+            state.hasModel = true
             state.jsonError = null
           })
         } catch (e) {
@@ -203,6 +222,7 @@ export const useGeometryStore = create<GeometryState>()(
         pushHistory()
         set((state) => {
           state.furniture = newGeometry
+          state.hasModel = true
           state.jsonString = JSON.stringify(newGeometry, null, 2)
           state.jsonError = null
           state.stepFileName = fileName
@@ -290,6 +310,7 @@ export const useGeometryStore = create<GeometryState>()(
         pushHistory()
         set((state) => {
           state.furniture = newGeometry
+          state.hasModel = true
           state.jsonString = JSON.stringify(
             { ...newGeometry, mesh: undefined },
             null,

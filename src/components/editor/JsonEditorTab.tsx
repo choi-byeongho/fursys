@@ -1,12 +1,11 @@
 import { useGeometryStore } from '@/store/geometryStore'
-import { defaultGeometry } from '@/data/defaultGeometry'
 
 export function JsonEditorTab() {
   const jsonString = useGeometryStore((s) => s.jsonString)
   const jsonError = useGeometryStore((s) => s.jsonError)
   const setJsonString = useGeometryStore((s) => s.setJsonString)
   const applyJsonString = useGeometryStore((s) => s.applyJsonString)
-  const setFurniture = useGeometryStore((s) => s.setFurniture)
+  const clearModel = useGeometryStore((s) => s.clearModel)
 
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -18,8 +17,8 @@ export function JsonEditorTab() {
           적용
         </button>
         <button
-          onClick={() => setFurniture(defaultGeometry)}
-          className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-600 text-gray-800 text-xs rounded font-semibold transition-colors"
+          onClick={clearModel}
+          className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs rounded font-semibold transition-colors"
         >
           초기화
         </button>
@@ -34,6 +33,7 @@ export function JsonEditorTab() {
       <textarea
         value={jsonString}
         onChange={(e) => setJsonString(e.target.value)}
+        placeholder={'{\n  "geometry": { ... },\n  "parts": [ ... ]\n}'}
         className="flex-1 bg-[#f5f5f7] text-gray-700 text-xs font-mono p-2 rounded border border-gray-400 resize-none focus:outline-none focus:border-blue-500 min-h-[300px]"
         spellCheck={false}
       />

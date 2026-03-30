@@ -8,25 +8,28 @@ export function Sidebar() {
   const [activeTab, setActiveTab] = useState<Tab>('parts')
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-400">
+    <div className="flex flex-col h-full bg-white">
       {/* 탭 헤더 */}
-      <div className="flex border-b border-gray-400">
+      <div className="flex items-center gap-1 px-4 pt-4 pb-2">
         {(['parts', 'json'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+            style={
               activeTab === tab
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-600 hover:text-gray-700'
-            }`}
+                ? { background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: 600 }
+                : { color: 'var(--text-secondary)', background: 'transparent' }
+            }
           >
-            {tab === 'parts' ? '부품 편집기' : 'JSON 편집기'}
+            {tab === 'parts' ? '부품 편집' : 'JSON'}
           </button>
         ))}
       </div>
 
-      {/* 탭 컨텐츠 */}
+      <div className="w-full h-px bg-gray-100" />
+
+      {/* 탭 내용 */}
       <div className="flex-1 overflow-y-auto p-3">
         {activeTab === 'parts' && <PartsEditorTab />}
         {activeTab === 'json' && <JsonEditorTab />}

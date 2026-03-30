@@ -1,66 +1,69 @@
 import type { SolverResult } from '@/types'
-import { fmtMeters, fmtNewtons, fmtDegrees, fmtKg } from '@/utils/formatters'
 
-function MetricRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function MetricPod({ label, value, unit, alert }: { label: string; value: string; unit?: string; alert?: boolean }) {
   return (
-    <div className={`flex justify-between items-center py-1.5 px-2 rounded ${highlight ? 'bg-red-950/40' : 'bg-white'}`}>
-      <span className="text-gray-600 text-xs">{label}</span>
-      <span className={`text-sm font-mono font-semibold ${highlight ? 'text-red-400' : 'text-gray-900'}`}>{value}</span>
+    <div className="flex flex-col gap-0.5 shrink-0">
+      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">{label}</span>
+      <div className="flex items-baseline gap-1">
+        <span className={`text-2xl font-black tracking-tighter ${alert ? 'text-rose-500' : 'text-[#2d3436]'}`}>
+          {value}
+        </span>
+        {unit && <span className="text-[10px] font-black uppercase text-gray-400">{unit}</span>}
+      </div>
     </div>
   )
 }
 
 export function MetricsGrid({ result }: { result: SolverResult }) {
-  const marginHighlight = result.stability_margin < 0.05
+  const marginCm = result.stability_margin * 100
+  const marginWarn = result.stability_margin < 0.05
 
   return (
-    <div className="flex flex-col gap-1">
-      <MetricRow
-        label="안정 여유"
-        value={fmtMeters(result.stability_margin)}
-        highlight={marginHighlight}
-      />
-      <MetricRow
-        label="임계 가압력"
-        value={fmtNewtons(result.critical_push_force)}
-        highlight={result.critical_push_force < 50}
-      />
-      {result.critical_extension_distance !== undefined && (
-        <MetricRow
-          label="임계 작동 거리"
-          value={result.critical_extension_distance === null ? '계산 불가' : fmtMeters(result.critical_extension_distance)}
-          highlight={result.critical_extension_distance !== null && result.critical_extension_distance < 0.1}
-        />
-      )}
-      {result.critical_extension_angle !== undefined && (
-        <MetricRow
-          label="임계 작동 각도"
-          value={result.critical_extension_angle === null ? '계산 불가' : fmtDegrees(result.critical_extension_angle)}
-          highlight={result.critical_extension_angle !== null && result.critical_extension_angle < 15}
-        />
-      )}
-      <MetricRow label="전도 방향" value={result.tipping_direction} />
-      <MetricRow
-        label="무게중심 높이"
-        value={fmtMeters(result.com.y)}
-      />
-      
-      {result.tipping_angle !== undefined && (
-        <MetricRow
-          label="임계 전도 각도"
-          value={result.tipping_angle.toFixed(1) + '°'}
-          highlight={result.tipping_angle < 15}
-        />
-      )}
-      {result.tipping_energy !== undefined && (
-        <MetricRow
-          label="전도 저항 에너지"
-          value={result.tipping_energy.toFixed(1) + ' J'}
-          highlight={result.tipping_energy < 50} // Highlight if it takes very little energy to tip
-        />
-      )}
+    <div className="flex items-center gap-8">
+      {/* 주요 지표: 안정 여유 */}
+      <div className="flex flex-col gap-1 px-5 py-3 rounded-2xl border shrink-0" style={{
+        background: marginWarn ? '#fff1f2' : '#f0fdf4',
+        borderColor: marginWarn ? '#fecaca' : '#bbf7d0',
+      }}>
+        <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${marginWarn ? 'text-rose-500' : 'text-emerald-600'}`}>
+          Stability Margin
+        </span>
+        <div className="flex items-baseline gap-1">
+          <span className={`text-4xl font-black tracking-tighter ${marginWarn ? 'text-rose-500' : 'text-emerald-600'}`}>
+            {Math.abs(marginCm).toFixed(1)}
+          </span>
+          <span className={`text-sm font-black uppercase ${marginWarn ? 'text-rose-500' : 'text-emerald-600'}`}>cm</span>
+        </div>
+      </div>
 
-      <MetricRow label="총 질량" value={fmtKg(result.total_mass)} />
+      {/* 구분선 */}
+      <div className="h-12 w-px bg-gray-200 shrink-0" />
+
+      {/* 보조 지표 */}
+      <div className="flex gap-8">
+        <MetricPod
+          label="Push Force"
+          value={result.critical_push_force < 1000
+            ? result.critical_push_force.toFixed(0)
+            : (result.critical_push_force / 1000).toFixed(1) + 'k'}
+          unit="N"
+          alert={result.critical_push_force < 50}
+        />
+        <MetricPod
+          label="Direction"
+          value={result.tipping_direction.split(' ')[0].toUpperCase()}
+        />
+        <MetricPod
+          label="CoM Height"
+          value={result.com.y.toFixed(2)}
+          unit="m"
+        />
+        <MetricPod
+          label="Total Mass"
+          value={result.total_mass.toFixed(1)}
+          unit="kg"
+        />
+      </div>
     </div>
   )
 }

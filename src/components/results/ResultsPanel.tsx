@@ -6,58 +6,54 @@ import { RiskFactors } from './RiskFactors'
 export function ResultsPanel() {
   const result = useResultsStore((s) => s.result)
   const isCalculating = useResultsStore((s) => s.isCalculating)
-  const error = useResultsStore((s) => s.error)
   const toggleTippingPreview = useResultsStore((s) => s.toggleTippingPreview)
   const tippingPreview = useResultsStore((s) => s.tippingPreview)
 
+  if (isCalculating) {
+    return (
+      <div className="flex items-center gap-3 px-6 py-6 h-full text-gray-400">
+        <div className="w-4 h-4 border-2 border-t-transparent border-gray-300 rounded-full animate-spin" />
+        <span className="text-xs">계산 중...</span>
+      </div>
+    )
+  }
+
+  if (!result) {
+    return (
+      <div className="h-full flex items-center justify-center text-xs text-gray-400">
+        파일을 업로드하면 결과가 표시됩니다
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-3 p-3 h-full overflow-y-auto">
-      <h2 className="text-sm font-bold text-gray-700 border-b border-gray-400 pb-2">
-        전도 해석 결과
-      </h2>
+    <div className="flex h-full gap-0 overflow-hidden">
+      {/* 컬럼 1: 상태 + 미리보기 버튼 */}
+      <div className="flex flex-col justify-center gap-3 px-4 py-4 border-r border-white/30 shrink-0">
+        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">해석 결과</span>
+        <StatusBadge status={result.status} />
+        <button
+          onClick={toggleTippingPreview}
+          disabled={result.status === '안전' || tippingPreview}
+          className="px-4 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap"
+          style={{
+            background: result.status !== '안전' ? 'var(--accent)' : '#f3f4f6',
+            color: result.status !== '안전' ? 'white' : '#9ca3af',
+          }}
+        >
+          전도 미리보기
+        </button>
+      </div>
 
-      {isCalculating && (
-        <div className="flex items-center gap-2 text-xs text-gray-600">
-          <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          계산 중...
-        </div>
-      )}
+      {/* 컬럼 2: 수치 지표 */}
+      <div className="flex items-center px-6 py-4 flex-1 min-w-0 overflow-x-auto">
+        <MetricsGrid result={result} />
+      </div>
 
-      {error && (
-        <div className="text-xs text-red-400 bg-red-950/30 rounded px-3 py-2">
-          오류: {error}
-        </div>
-      )}
-
-      {result && !isCalculating && (
-        <>
-          <StatusBadge status={result.status} />
-          <MetricsGrid result={result} />
-          <RiskFactors
-            risks={result.key_risk_factors}
-            suggestions={result.improvement_suggestions}
-          />
-
-          {/* 전도 미리보기 버튼 */}
-          <button
-            onClick={toggleTippingPreview}
-            disabled={result.status === '안전' || tippingPreview}
-            className={`mt-2 py-2 px-4 rounded-lg text-xs font-semibold transition-colors ${
-              result.status === '안전' || tippingPreview
-                ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-                : 'bg-red-700 hover:bg-red-600 text-white'
-            }`}
-          >
-            {tippingPreview ? '미리보기 재생 중...' : '전도 미리보기'}
-          </button>
-        </>
-      )}
-
-      {!result && !isCalculating && (
-        <div className="text-xs text-gray-600 text-center py-4">
-          시나리오를 선택하고 계산을 실행하세요
-        </div>
-      )}
+      {/* 컬럼 3: 리스크 / 개선 제안 */}
+      <div className="w-64 shrink-0 border-l border-white/30 overflow-y-auto px-4 py-4">
+        <RiskFactors risks={result.key_risk_factors} suggestions={result.improvement_suggestions} />
+      </div>
     </div>
   )
 }
